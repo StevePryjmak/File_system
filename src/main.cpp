@@ -1,4 +1,5 @@
 #include <iostream>
+#include "FreeBlocksBitmap.cpp"
 
 const int BLOCK_SIZE = 512;
 const int NUM_BLOCKS = 48;
@@ -26,6 +27,7 @@ struct DataBlock {
 class Filesystem {
     Superblock superblock;
     Inode inodes[NUM_INODES];
+    FreeBlocksBitmap free_blocks_bitmap;
     DataBlock data_blocks[NUM_BLOCKS];
 };
 
