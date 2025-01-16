@@ -19,6 +19,15 @@ struct Inode {
     int used = false;
 };
 
+struct DataBlock {
+    char data[BLOCK_SIZE];
+};
+
+class Filesystem {
+    Superblock superblock;
+    Inode inodes[NUM_INODES];
+    DataBlock data_blocks[NUM_BLOCKS];
+};
 
 int main() {
     return 0;
