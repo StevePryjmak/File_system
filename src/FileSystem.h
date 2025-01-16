@@ -1,10 +1,14 @@
 #pragma once
 #include <string>
+#include <vector>
+#include <cstdint>
+#include <cstring>
 #include "constants.h"
 #include "Superblock.h"
 #include "Inode.h"
 #include "FreeBlocksBitmap.h"
 #include "DataBlock.h"
+
 
 
 class FileSystem {
@@ -16,6 +20,14 @@ private:
 public:
     FileSystem();
 
+    void showFiles();
+    void showMemoryState();
+    /**
+     * Save file to the filesystem
+     * @param filename - name of the file
+     * @param data - data to be saved
+     */
+    void saveFile(const std::string& filename, const std::vector<uint8_t>& data);
     /** 
      * Filesystem configuration file functions 
      * @param path - path to the file

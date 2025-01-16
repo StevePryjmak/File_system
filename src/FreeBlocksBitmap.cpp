@@ -51,8 +51,8 @@ size_t FreeBlocksBitmap::getFreeBlockCount() const {
 
 void FreeBlocksBitmap::printBitmap() const {
     for (size_t i = 0; i < N_BLOCKS; ++i) {
-        std::cout << (bitmap.test(i) ? "1" : "0");
-        if ((i + 1) % 64 == 0) std::cout << "\n";
+        std::cout << (bitmap.test(i) ? "0" : "*");
+        if ((i + 1) % 8 == 0) std::cout << "\n";
     }
     std::cout << std::endl;
 }
