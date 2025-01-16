@@ -136,16 +136,16 @@ void FileSystem::saveDisk(const std::string &path) {
 
 
 std::string FileSystem::readFile(const std::string &filename) {
-    for (const auto &inode: inodes) {
-        if (inode.used && filename == inode.name) {
-            std::string data;
-            for (size_t i = 0; i < inode.size / BLOCK_SIZE + 1; ++i) {
-                data.append(data_blocks[inode.block_pointers[i]].data, BLOCK_SIZE);
-            }
-            return data;
-        }
+    INode* inode = findINode(filename);
+    if (!inode) {
+        std::cout << "File not found!" << std::endl;
+        return "File not found!";
     }
-    return "";
+    std::string data;
+    for (size_t i = 0; i < inode->size / BLOCK_SIZE + 1; ++i) {
+        data.append(data_blocks[inode->block_pointers[i]].data, BLOCK_SIZE);
+    }
+    return data;
 }
 
 FileSystem *FileSystem::loadDisk(const std::string &path) {
