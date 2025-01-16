@@ -4,13 +4,12 @@
 #include <cstdint>
 #include <cstring>
 #include <fstream>
+#include <cstdio> // For std::remove
 #include "constants.h"
 #include "Superblock.h"
 #include "Inode.h"
 #include "FreeBlocksBitmap.h"
 #include "DataBlock.h"
-
-
 
 class FileSystem {
 private:
@@ -58,16 +57,12 @@ public:
     void saveDisk(const std::string &path);
     static FileSystem *loadDisk(const std::string &path);
 
+    /**
+     * Remove the disk file from the filesystem
+     * @param path - path to the disk file
+     */
 
     template<typename T>
     void writeStruct(const T& data, int blockIndex);
 };
-
-
-// template<typename T>
-// void FileSystem::writeStruct(const T& data, int blockIndex) {
-//     file.seekp(blockIndex * sizeof(T));
-//     file.write(reinterpret_cast<const char*>(&data), sizeof(T));
-// }
-
 

@@ -15,6 +15,7 @@ FileSystem::FileSystem(std::string diskLocation) {
     saveDisk(diskLocation);
 }
 
+
 // Works but need to be refactored SRP principle not followed
 void FileSystem::saveFile(const std::string& filename, const std::vector<uint8_t>& data) {
     if (filename.size() > FILE_NAME_MAX_LENGTH) {
@@ -146,12 +147,14 @@ std::string FileSystem::readFile(const std::string &filename) {
     return data;
 }
 
+
 FileSystem *FileSystem::loadDisk(const std::string &path) {
     std::ifstream file(path);
     auto system = new FileSystem();
     file.read(reinterpret_cast<char *>(system), sizeof(FileSystem));
     return system;
 }
+
 
 INode *FileSystem::findINode(const std::string &filename) {
     for (auto &inode : inodes) {
