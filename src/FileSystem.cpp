@@ -25,11 +25,9 @@ void FileSystem::saveFile(const std::string& filename, const std::vector<uint8_t
         std::cerr << "File is too big!" << std::endl;
         return;
     }
-    for (const auto &inode : inodes) {
-        if (inode.used && filename == inode.name) {
-            std::cerr << "File with the same name already exists!" << std::endl;
-            return;
-        }
+    if(findINode(filename)) {
+        std::cerr << "File with the same name already exists!" << std::endl;
+        return;
     }
     auto inode = INode();
     strncpy(inode.name, filename.c_str(), filename.size());
@@ -112,7 +110,7 @@ void FileSystem::exportFile(const std::string &internal_filename, const std::str
 void FileSystem::showFiles() {
     for (auto &inode : inodes) {
         if (inode.used) {
-            std::cout << inode.name << std::endl;
+            std::cout << inode.name << "\t" << inode.size << " bytes" << std::endl;
         }
     }
 }
