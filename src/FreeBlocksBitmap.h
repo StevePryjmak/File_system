@@ -3,8 +3,8 @@
 
 #include <bitset>
 #include <iostream>
-
-#define N_BLOCKS 48 // @TODO remove this leter
+#include "constants.h"
+#define N_BLOCKS NUM_BLOCKS
 
 class FreeBlocksBitmap {
 private:

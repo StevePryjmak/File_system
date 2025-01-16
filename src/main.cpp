@@ -1,36 +1,11 @@
 #include <iostream>
-#include "FreeBlocksBitmap.cpp"
+#include "FileSystem.h"
+#include "constants.h"
 
-const int BLOCK_SIZE = 512;
-const int NUM_BLOCKS = 48;
-const int NUM_INODES = 16;
-const int NUM_FILES = 16;
-
-struct Superblock {
-    int magic = 0xf0f03410;
-    int num_blocks = NUM_BLOCKS;
-    int free_blocks = NUM_BLOCKS;
-    int inode_start = 1;
-};
-
-struct Inode {
-    char name[50];
-    int size;
-    int block_pointers[NUM_FILES];
-    int used = false;
-};
-
-struct DataBlock {
-    char data[BLOCK_SIZE];
-};
-
-class Filesystem {
-    Superblock superblock;
-    Inode inodes[NUM_INODES];
-    FreeBlocksBitmap free_blocks_bitmap;
-    DataBlock data_blocks[NUM_BLOCKS];
-};
 
 int main() {
+    FileSystem fs = FileSystem();
+    fs.saveToFile(FILE_SYSTEM_FILE);
+    std::cout << "Hello, World!" << std::endl;
     return 0;
 }
