@@ -84,6 +84,18 @@ void FileSystem::importFile(const std::string &filename) {
     saveFile(filename, data);
 }
 
+void FileSystem::exportFile(const std::string &filename) {
+    for (const auto &inode: inodes) {
+        if (inode.used && filename == inode.name) {
+            std::ofstream file(filename, std::ios::out | std::ios::binary);
+            for (size_t i = 0; i < inode.size / BLOCK_SIZE + 1; ++i) {
+                file.write(data_blocks[inode.block_pointers[i]].data, BLOCK_SIZE);
+            }
+            file.close();
+        }
+    }
+}
+
 void FileSystem::showFiles() {
     for (auto &inode : inodes) {
         if (inode.used) {
