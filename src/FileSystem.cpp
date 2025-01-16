@@ -69,6 +69,21 @@ void FileSystem::deleteFile(const std::string &filename) {
     }
 }
 
+void FileSystem::importFile(const std::string &filename) {
+    std::ifstream
+            file(filename, std::ios::in | std::ios::binary | std::ios::ate);
+    if (!file.is_open()) {
+        std::cerr << "Could not open file!" << std::endl;
+        return;
+    }
+    auto size = file.tellg();
+    file.seekg(0, std::ios::beg);
+    std::vector<uint8_t> data(size);
+    file.read(reinterpret_cast<char *>(data.data()), size);
+    file.close();
+    saveFile(filename, data);
+}
+
 void FileSystem::showFiles() {
     for (auto &inode : inodes) {
         if (inode.used) {
