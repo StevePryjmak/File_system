@@ -22,12 +22,22 @@ public:
 
     void showFiles();
     void showMemoryState();
+
+    /**
+     * Import file from the outside
+     * @param filename - name of the file 
+     */
+    void importFile(const std::string& filename);
+    void exportFile(const std::string& filename);
+    
     /**
      * Save file to the filesystem
      * @param filename - name of the file
      * @param data - data to be saved
      */
     void saveFile(const std::string& filename, const std::vector<uint8_t>& data);
+    void deleteFile(const std::string& filename);
+
     /** 
      * Filesystem configuration file functions 
      * @param path - path to the file

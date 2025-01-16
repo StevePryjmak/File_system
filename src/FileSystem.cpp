@@ -12,6 +12,7 @@ FileSystem::FileSystem() {
     }
 }
 
+// Works but need to be refactored SRP principle not followed
 void FileSystem::saveFile(const std::string& filename, const std::vector<uint8_t>& data) {
     if (filename.size() > FILE_NAME_MAX_LENGTH) {
         std::cerr << "Filename is too long!" << std::endl;
@@ -21,8 +22,14 @@ void FileSystem::saveFile(const std::string& filename, const std::vector<uint8_t
         std::cerr << "File is too big!" << std::endl;
         return;
     }
+    for (const auto &inode : inodes) {
+        if (inode.used && filename == inode.name) {
+            std::cerr << "File with the same name already exists!" << std::endl;
+            return;
+        }
+    }
     auto inode = Inode();
-    strncpy(inode.name, filename.c_str(), 50);
+    strncpy(inode.name, filename.c_str(), FILE_NAME_MAX_LENGTH);
     inode.size = data.size();
     size_t blocks_needed = inode.size / BLOCK_SIZE + 1;
     size_t blocks_allocated = 0;
@@ -37,10 +44,27 @@ void FileSystem::saveFile(const std::string& filename, const std::vector<uint8_t
         std::cerr << "Not enough space to save file!" << std::endl;
         return;
     }
-    inodes[0] = inode;
+    for (auto &existing_inode : inodes) {
+        if (!existing_inode.used) {
+            existing_inode = inode;
+            existing_inode.used = true;
+            break;
+        }
+    }
     for (size_t i = 0; i < blocks_allocated; ++i) {
         for (size_t j = 0; j < BLOCK_SIZE && (i * BLOCK_SIZE + j) < inode.size; ++j) {
             data_blocks[inode.block_pointers[i]].data[j] = data[i * BLOCK_SIZE + j];
+        }
+    }
+}
+
+void FileSystem::deleteFile(const std::string &filename) {
+    for (auto &inode: inodes) {
+        if (inode.used && filename == inode.name) {
+            inode.used = false;
+            for (size_t i = 0; i < inode.size / BLOCK_SIZE + 1; ++i) {
+                free_blocks_bitmap.deallocateBlock(inode.block_pointers[i]);
+            }
         }
     }
 }
