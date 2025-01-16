@@ -148,11 +148,11 @@ std::string FileSystem::readFile(const std::string &filename) {
 }
 
 
-FileSystem *FileSystem::loadDisk(const std::string &path) {
+FileSystem &FileSystem::loadDisk(const std::string &path) {
     std::ifstream file(path);
     auto system = new FileSystem();
     file.read(reinterpret_cast<char *>(system), sizeof(FileSystem));
-    return system;
+    return *system;
 }
 
 

@@ -1,10 +1,9 @@
 #include <iostream>
 #include "FileSystem.h"
 #include "constants.h"
-
-
 #include <sstream>
 #include <vector>
+#include <filesystem>
 
 std::pair<std::string, std::vector<std::string>> parseCommand(const std::string& command) {
     std::istringstream iss(command);
@@ -16,6 +15,18 @@ std::pair<std::string, std::vector<std::string>> parseCommand(const std::string&
         args.push_back(arg);
     }
     return {cmd, args};
+}
+
+void printFSHelp() {
+    std::cout << "File System Commands:\n";
+    std::cout << "  exit - Exit the interactive shell\n";
+    std::cout << "  saveFile <filename> <content> - Save a file with the specified content\n";
+    std::cout << "  deleteFile <filename> - Delete the specified file\n";
+    std::cout << "  ls - List all files in the file system\n";
+    std::cout << "  mm - Show memory state of the file system\n";
+    std::cout << "  importFile <src> <dest> - Import a file from the host file system\n";
+    std::cout << "  exportFile <src> <dest> - Export a file to the host file system\n";
+    std::cout << "  help - Show this help message\n\n";
 }
 
 void executeCommand(FileSystem& fs, const std::string& cmd, const std::vector<std::string>& args, const std::string& command) {
@@ -40,15 +51,19 @@ void executeCommand(FileSystem& fs, const std::string& cmd, const std::vector<st
         std::string src = args[0];
         std::string dest = args[1];
         fs.exportFile(src, dest);
+    } else if (cmd == "help") {
+        printFSHelp();
     } else {
         std::cout << "Unknown or invalid command: " << command << std::endl;
+        std::cout << "Type 'help' for a list of available commands." << std::endl;
     }
 }
+
 
 void interactiveShell(FileSystem& fs) {
     std::string command;
     while (true) {
-        std::cout << "fs> ";
+        std::cout << "\nfs> ";
         std::getline(std::cin, command);
         auto [cmd, args] = parseCommand(command);
         executeCommand(fs, cmd, args, command);
@@ -56,7 +71,8 @@ void interactiveShell(FileSystem& fs) {
 }
 
 void removeDisk(const std::string &path) {
-    if (std::remove(path.c_str()) != 0) {
+    std::string fullPath = "partitions/" + path;
+    if (std::remove(fullPath.c_str()) != 0) {
         perror("Error deleting file");
     } else {
         std::cout << "File successfully deleted" << std::endl;
@@ -64,7 +80,15 @@ void removeDisk(const std::string &path) {
 }
 
 void createNewDisk(const std::string &path) {
-    FileSystem fs(path+".myfs");
+    std::filesystem::create_directory("partitions");
+    FileSystem fs("partitions/" + path + ".myfs");
+}
+
+void showDisks() {
+    std::filesystem::create_directory("partitions");
+    for (const auto &entry : std::filesystem::directory_iterator("partitions")) {
+        std::cout << entry.path().filename().string() << std::endl;
+    }
 }
 
 void printHelp() {
@@ -72,14 +96,16 @@ void printHelp() {
     std::cout << "  exit - Exit the program\n";
     std::cout << "  removeDisk <path> - Remove the disk at the specified path\n";
     std::cout << "  createDisk <path> - Create a new disk at the specified path\n";
-    std::cout << "  openShell <path> - Open the interactive shell for the specified disk\n";
+    std::cout << "  run <path> - Open the interactive shell for the specified disk\n";
+    std::cout << "  showDisks - Show all available disks\n";
     std::cout << "  help - Show this help message\n\n";
 }
+
 
 void mainShell() {
     std::string command;
     while (true) {
-        std::cout << "main> ";
+        std::cout << "\nmain> ";
         std::getline(std::cin, command);
         auto [cmd, args] = parseCommand(command);
         if (cmd == "exit") {
@@ -88,12 +114,15 @@ void mainShell() {
             removeDisk(args[0]);
         } else if (cmd == "createDisk" && args.size() == 1) {
             createNewDisk(args[0]);
-        } else if (cmd == "openShell" && args.size() == 1) {
-            FileSystem fs(args[0]);
+        } else if (cmd == "run" && args.size() == 1) {
+            FileSystem& fs = FileSystem::loadDisk("partitions/" + args[0]);
             interactiveShell(fs);
         } else if (cmd == "help") {
             printHelp();
-        } else {
+        } else if(cmd == "showDisks") {
+            showDisks();
+        }
+        else {
             std::cout << "Unknown or invalid command: " << command << std::endl;
             std::cout << "Type 'help' for a list of available commands." << std::endl;
         }

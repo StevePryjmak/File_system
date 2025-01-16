@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <fstream>
-#include <cstdio> // For std::remove
+#include <cstdio>
 #include "constants.h"
 #include "Superblock.h"
 #include "Inode.h"
@@ -55,7 +55,7 @@ public:
      * @return Filesystem object
      */
     void saveDisk(const std::string &path);
-    static FileSystem *loadDisk(const std::string &path);
+    static FileSystem &loadDisk(const std::string &path);
 
     /**
      * Remove the disk file from the filesystem
