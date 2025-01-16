@@ -3,6 +3,7 @@
 #include <vector>
 #include <cstdint>
 #include <cstring>
+#include <fstream>
 #include "constants.h"
 #include "Superblock.h"
 #include "Inode.h"
@@ -14,22 +15,32 @@
 class FileSystem {
 private:
     Superblock superblock;
-    Inode inodes[NUM_INODES];
+    std::string diskLocation;
+    INode inodes[NUM_INODES];
     FreeBlocksBitmap free_blocks_bitmap;
     DataBlock data_blocks[NUM_BLOCKS];
+
+    INode *findINode(const std::string &filename);
 public:
-    FileSystem();
+    FileSystem(std::string diskLocation = FILE_SYSTEM_FILE);
 
     void showFiles();
     void showMemoryState();
 
     /**
-     * Import file from the outside
-     * @param filename - name of the file 
+     * Import a file from the external filesystem into the internal filesystem
+     * @param external_filename - name of the file in the external filesystem
+     * @param internal_filename - name to be used for the file in the internal filesystem
      */
-    void importFile(const std::string& filename);
-    void exportFile(const std::string& filename);
-    
+    void importFile(const std::string &external_filename, const std::string &internal_filename);
+
+    /**
+     * Export a file from the internal filesystem to the external filesystem
+     * @param internal_filename - name of the file in the internal filesystem
+     * @param external_filename - name to be used for the file in the external filesystem
+     */
+    void exportFile(const std::string &internal_filename, const std::string &external_filename);
+
     /**
      * Save file to the filesystem
      * @param filename - name of the file
@@ -37,15 +48,26 @@ public:
      */
     void saveFile(const std::string& filename, const std::vector<uint8_t>& data);
     void deleteFile(const std::string& filename);
+    std::string readFile(const std::string& filename);
 
     /** 
      * Filesystem configuration file functions 
      * @param path - path to the file
      * @return Filesystem object
      */
-    void saveToFile(const std::string &path);
-    static FileSystem *loadFromFile(const std::string &path);
+    void saveDisk(const std::string &path);
+    static FileSystem *loadDisk(const std::string &path);
+
+
+    template<typename T>
+    void writeStruct(const T& data, int blockIndex);
 };
 
+
+// template<typename T>
+// void FileSystem::writeStruct(const T& data, int blockIndex) {
+//     file.seekp(blockIndex * sizeof(T));
+//     file.write(reinterpret_cast<const char*>(&data), sizeof(T));
+// }
 
 

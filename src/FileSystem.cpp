@@ -1,15 +1,18 @@
 #include "FileSystem.h"
 #include <fstream>
 
-FileSystem::FileSystem() {
+
+FileSystem::FileSystem(std::string diskLocation) {
     superblock = Superblock();
+    this->diskLocation = diskLocation;
     for (auto &inode : inodes) {
-        inode = Inode();
+        inode = INode();
     }
     free_blocks_bitmap = FreeBlocksBitmap();
     for (auto &data_block : data_blocks) {
         data_block = DataBlock();
     }
+    saveDisk(diskLocation);
 }
 
 // Works but need to be refactored SRP principle not followed
@@ -28,8 +31,8 @@ void FileSystem::saveFile(const std::string& filename, const std::vector<uint8_t
             return;
         }
     }
-    auto inode = Inode();
-    strncpy(inode.name, filename.c_str(), FILE_NAME_MAX_LENGTH);
+    auto inode = INode();
+    strncpy(inode.name, filename.c_str(), filename.size());
     inode.size = data.size();
     size_t blocks_needed = inode.size / BLOCK_SIZE + 1;
     size_t blocks_allocated = 0;
@@ -56,7 +59,9 @@ void FileSystem::saveFile(const std::string& filename, const std::vector<uint8_t
             data_blocks[inode.block_pointers[i]].data[j] = data[i * BLOCK_SIZE + j];
         }
     }
+    saveDisk(diskLocation);
 }
+
 
 void FileSystem::deleteFile(const std::string &filename) {
     for (auto &inode: inodes) {
@@ -67,11 +72,12 @@ void FileSystem::deleteFile(const std::string &filename) {
             }
         }
     }
+    saveDisk(diskLocation);
 }
 
-void FileSystem::importFile(const std::string &filename) {
-    std::ifstream
-            file(filename, std::ios::in | std::ios::binary | std::ios::ate);
+
+void FileSystem::importFile(const std::string &external_filename, const std::string &internal_filename) {
+    std::ifstream file(external_filename, std::ios::in | std::ios::binary | std::ios::ate);
     if (!file.is_open()) {
         std::cerr << "Could not open file!" << std::endl;
         return;
@@ -81,20 +87,27 @@ void FileSystem::importFile(const std::string &filename) {
     std::vector<uint8_t> data(size);
     file.read(reinterpret_cast<char *>(data.data()), size);
     file.close();
-    saveFile(filename, data);
+    saveFile(internal_filename, data);
 }
 
-void FileSystem::exportFile(const std::string &filename) {
-    for (const auto &inode: inodes) {
-        if (inode.used && filename == inode.name) {
-            std::ofstream file(filename, std::ios::out | std::ios::binary);
-            for (size_t i = 0; i < inode.size / BLOCK_SIZE + 1; ++i) {
-                file.write(data_blocks[inode.block_pointers[i]].data, BLOCK_SIZE);
-            }
-            file.close();
-        }
+
+void FileSystem::exportFile(const std::string &internal_filename, const std::string &external_filename) {
+    INode* inode = findINode(internal_filename);
+    if (!inode) {
+        std::cerr << "File not found!" << std::endl;
+        return;
     }
+    std::ofstream file(external_filename, std::ios::out | std::ios::binary);
+    if (!file.is_open()) {
+        std::cerr << "Could not open file!" << std::endl;
+        return;
+    }
+    for (size_t i = 0; i < inode->size / BLOCK_SIZE + 1; ++i) {
+        file.write(data_blocks[inode->block_pointers[i]].data, BLOCK_SIZE);
+    }
+    file.close();
 }
+
 
 void FileSystem::showFiles() {
     for (auto &inode : inodes) {
@@ -104,20 +117,49 @@ void FileSystem::showFiles() {
     }
 }
 
+
 void FileSystem::showMemoryState() {
     std::cout << "Free blocks: " << free_blocks_bitmap.getFreeBlockCount() << std::endl;
     free_blocks_bitmap.printBitmap();
 }
 
-void FileSystem::saveToFile(const std::string &path) {
+
+void FileSystem::saveDisk(const std::string &path) {
     std::ofstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "Could not open file!" << std::endl;
+        return;
+    }
     file.write(reinterpret_cast<char *>(this), sizeof(FileSystem));
     file.close();
 }
 
-FileSystem *FileSystem::loadFromFile(const std::string &path) {
+
+std::string FileSystem::readFile(const std::string &filename) {
+    for (const auto &inode: inodes) {
+        if (inode.used && filename == inode.name) {
+            std::string data;
+            for (size_t i = 0; i < inode.size / BLOCK_SIZE + 1; ++i) {
+                data.append(data_blocks[inode.block_pointers[i]].data, BLOCK_SIZE);
+            }
+            return data;
+        }
+    }
+    return "";
+}
+
+FileSystem *FileSystem::loadDisk(const std::string &path) {
     std::ifstream file(path);
     auto system = new FileSystem();
     file.read(reinterpret_cast<char *>(system), sizeof(FileSystem));
     return system;
+}
+
+INode *FileSystem::findINode(const std::string &filename) {
+    for (auto &inode : inodes) {
+        if (inode.used && filename == inode.name) {
+            return &inode;
+        }
+    }
+    return nullptr;
 }
