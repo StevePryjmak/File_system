@@ -1,7 +1,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define FILE_SYSTEM_FILE "filesystem.txt"
+#define FILE_SYSTEM_FILE "partitions/temp.myfs"
 #define FILE_NAME_MAX_LENGTH 32
 #include <algorithm>
 

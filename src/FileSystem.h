@@ -14,13 +14,13 @@
 class FileSystem {
 private:
     Superblock superblock;
-    std::string diskLocation;
     INode inodes[NUM_INODES];
     FreeBlocksBitmap free_blocks_bitmap;
     DataBlock data_blocks[NUM_BLOCKS];
 
     INode *findINode(const std::string &filename);
 public:
+    std::string diskLocation;
     FileSystem(std::string diskLocation = FILE_SYSTEM_FILE);
 
     void showFiles();
@@ -55,7 +55,9 @@ public:
      * @return Filesystem object
      */
     void saveDisk(const std::string &path);
-    static FileSystem &loadDisk(const std::string &path);
+    static FileSystem *loadDisk(const std::string &path);
+    void setDiskLocation(const std::string &path);
+    
 
     /**
      * Remove the disk file from the filesystem

@@ -29,44 +29,48 @@ void printFSHelp() {
     std::cout << "  help - Show this help message\n\n";
 }
 
-void executeCommand(FileSystem& fs, const std::string& cmd, const std::vector<std::string>& args, const std::string& command) {
+bool executeCommand(FileSystem* fs, const std::string& cmd, const std::vector<std::string>& args, const std::string& command) {
+    std::cout << "Disk Location: " << fs->diskLocation << std::endl;
     if (cmd == "exit") {
-        exit(0);
+        return false;
     } else if (cmd == "saveFile" && args.size() >= 2) {
         std::string filename = args[0];
         std::string content = command.substr(command.find(args[1]));
-        fs.saveFile(filename, std::vector<uint8_t>(content.begin(), content.end()));
+        fs->saveFile(filename, std::vector<uint8_t>(content.begin(), content.end()));
     } else if (cmd == "deleteFile" && args.size() == 1) {
         std::string filename = args[0];
-        fs.deleteFile(filename);
+        fs->deleteFile(filename);
     } else if (cmd == "ls") {
-        fs.showFiles();
+        fs->showFiles();
     } else if (cmd == "mm") {
-        fs.showMemoryState();
+        fs->showMemoryState();
     } else if (cmd == "importFile" && args.size() == 2) {
         std::string src = args[0];
         std::string dest = args[1];
-        fs.importFile(src, dest);
+        fs->importFile(src, dest);
     } else if (cmd == "exportFile" && args.size() == 2) {
         std::string src = args[0];
         std::string dest = args[1];
-        fs.exportFile(src, dest);
+        fs->exportFile(src, dest);
     } else if (cmd == "help") {
         printFSHelp();
     } else {
         std::cout << "Unknown or invalid command: " << command << std::endl;
         std::cout << "Type 'help' for a list of available commands." << std::endl;
     }
+    return true;
 }
 
 
-void interactiveShell(FileSystem& fs) {
+void interactiveShell(FileSystem* fs) {
+    std::cout << "Interact:diskLocation: " << fs->diskLocation << std::endl;
     std::string command;
-    while (true) {
+    bool run = true;
+    while (run) {
         std::cout << "\nfs> ";
         std::getline(std::cin, command);
         auto [cmd, args] = parseCommand(command);
-        executeCommand(fs, cmd, args, command);
+        run = executeCommand(fs, cmd, args, command);
     }
 }
 
@@ -82,6 +86,7 @@ void removeDisk(const std::string &path) {
 void createNewDisk(const std::string &path) {
     std::filesystem::create_directory("partitions");
     FileSystem fs("partitions/" + path + ".myfs");
+    fs.saveDisk("partitions/" + path + ".myfs");
 }
 
 void showDisks() {
@@ -101,7 +106,6 @@ void printHelp() {
     std::cout << "  help - Show this help message\n\n";
 }
 
-
 void mainShell() {
     std::string command;
     while (true) {
@@ -115,14 +119,15 @@ void mainShell() {
         } else if (cmd == "createDisk" && args.size() == 1) {
             createNewDisk(args[0]);
         } else if (cmd == "run" && args.size() == 1) {
-            FileSystem& fs = FileSystem::loadDisk("partitions/" + args[0]);
-            interactiveShell(fs);
+            // FileSystem* fs = ;
+            
+            // fs.setDiskLocation("partitions/" + args[0]);
+            interactiveShell(FileSystem::loadDisk("partitions/" + args[0]));
         } else if (cmd == "help") {
             printHelp();
         } else if(cmd == "showDisks") {
             showDisks();
-        }
-        else {
+        } else {
             std::cout << "Unknown or invalid command: " << command << std::endl;
             std::cout << "Type 'help' for a list of available commands." << std::endl;
         }
@@ -133,25 +138,3 @@ int main() {
     mainShell();
     return 0;
 }
-
-
-
-// int main() {
-//     FileSystem fs = FileSystem();
-//     fs.saveFile("test.txt", std::vector<uint8_t>(48, 'a'));
-//     // fs.saveFile("test2.txt", std::vector<uint8_t>(1024, 'b'));
-//     fs.showFiles();
-//     fs.showMemoryState();
-//     // fs.deleteFile("test.txt");
-//     fs.showFiles();
-//     fs.showMemoryState();
-//     fs.saveFile("test3.txt", std::vector<uint8_t>(48, 'c'));
-//     fs.showFiles();
-//     fs.showMemoryState();
-//     fs.importFile("test2.txt", "test2.txt");
-//     fs.exportFile("test2.txt", "test2_exported.txt");
-//     // fs.saveDisk(FILE_SYSTEM_FILE);
-//     // fs.saveDisk();
-//     return 0;
-// }
-

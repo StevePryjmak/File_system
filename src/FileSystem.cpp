@@ -32,9 +32,9 @@ void FileSystem::saveFile(const std::string& filename, const std::vector<uint8_t
     }
     auto inode = INode();
     strncpy(inode.name, filename.c_str(), filename.size());
-    inode.size = data.size();
     size_t blocks_needed = inode.size / BLOCK_SIZE + 1;
     size_t blocks_allocated = 0;
+    inode.size = blocks_needed * BLOCK_SIZE;
     for (size_t i = 0; i < NUM_BLOCKS && blocks_allocated < blocks_needed; ++i) {
         if (free_blocks_bitmap.isBlockFree(i)) {
             inode.block_pointers[blocks_allocated] = i;
@@ -74,6 +74,9 @@ void FileSystem::deleteFile(const std::string &filename) {
     saveDisk(diskLocation);
 }
 
+void FileSystem::setDiskLocation(const std::string &path) {
+    diskLocation = path;
+}
 
 void FileSystem::importFile(const std::string &external_filename, const std::string &internal_filename) {
     std::ifstream file(external_filename, std::ios::in | std::ios::binary | std::ios::ate);
@@ -124,12 +127,15 @@ void FileSystem::showMemoryState() {
 
 
 void FileSystem::saveDisk(const std::string &path) {
-    std::ofstream file(path);
+    std::ofstream file(path, std::ios::binary);
     if (!file.is_open()) {
         std::cerr << "Could not open file!" << std::endl;
         return;
     }
-    file.write(reinterpret_cast<char *>(this), sizeof(FileSystem));
+    file.write(reinterpret_cast<char *>(&superblock), sizeof(superblock));
+    file.write(reinterpret_cast<char *>(inodes), sizeof(inodes));
+    file.write(reinterpret_cast<char *>(&free_blocks_bitmap), sizeof(free_blocks_bitmap));
+    file.write(reinterpret_cast<char *>(data_blocks), sizeof(data_blocks));
     file.close();
 }
 
@@ -148,11 +154,21 @@ std::string FileSystem::readFile(const std::string &filename) {
 }
 
 
-FileSystem &FileSystem::loadDisk(const std::string &path) {
-    std::ifstream file(path);
+FileSystem *FileSystem::loadDisk(const std::string &path) {
+    std::ifstream file(path, std::ios::binary);
+    if (!file.is_open()) {
+        std::cerr << "Could not open file!" << std::endl;
+        return nullptr;
+    }
     auto system = new FileSystem();
-    file.read(reinterpret_cast<char *>(system), sizeof(FileSystem));
-    return *system;
+    file.read(reinterpret_cast<char *>(&system->superblock), sizeof(system->superblock));
+    file.read(reinterpret_cast<char *>(system->inodes), sizeof(system->inodes));
+    file.read(reinterpret_cast<char *>(&system->free_blocks_bitmap), sizeof(system->free_blocks_bitmap));
+    file.read(reinterpret_cast<char *>(system->data_blocks), sizeof(system->data_blocks));
+    system->diskLocation = path;
+    file.close();
+    std::cout << "Disk location: " << system->diskLocation << std::endl;
+    return system;
 }
 
 
