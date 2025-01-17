@@ -10,6 +10,7 @@
 #include "Inode.h"
 #include "FreeBlocksBitmap.h"
 #include "DataBlock.h"
+#include <fstream>
 
 class FileSystem {
 private:

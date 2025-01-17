@@ -32,10 +32,10 @@ void showDisks() {
 void printHelp() {
     std::cout << "Available commands:\n";
     std::cout << "  exit - Exit the program\n";
-    std::cout << "  removeDisk <path> - Remove the disk at the specified path\n";
-    std::cout << "  createDisk <path> - Create a new disk at the specified path\n";
+    std::cout << "  remove <path> - Remove the disk at the specified path\n";
+    std::cout << "  create <path> - Create a new disk at the specified path\n";
     std::cout << "  run <path> - Open the interactive shell for the specified disk\n";
-    std::cout << "  showDisks - Show all available disks\n";
+    std::cout << "  show - Show all available disks\n";
     std::cout << "  test - Run a set of preapered commands\n";
     std::cout << "  help - Show this help message\n\n";
 }
@@ -48,15 +48,15 @@ void mainShell() {
         auto [cmd, args] = parseCommand(command);
         if (cmd == "exit") {
             exit(0);
-        } else if (cmd == "removeDisk" && args.size() == 1) {
+        } else if (cmd == "remove" && args.size() == 1) {
             removeDisk(args[0]);
-        } else if (cmd == "createDisk" && args.size() == 1) {
+        } else if (cmd == "create" && args.size() == 1) {
             createNewDisk(args[0]);
         } else if (cmd == "run" && args.size() == 1) {
             interactiveShell(FileSystem::loadDisk("partitions/" + args[0]));
         } else if (cmd == "help") {
             printHelp();
-        } else if(cmd == "showDisks") {
+        } else if(cmd == "show") {
             showDisks();
         }
         else if(cmd == "test") {

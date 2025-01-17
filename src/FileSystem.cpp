@@ -1,5 +1,5 @@
 #include "FileSystem.h"
-#include <fstream>
+
 
 
 FileSystem::FileSystem(std::string diskLocation) {
@@ -52,15 +52,52 @@ void FileSystem::saveFile(const std::string& filename, const std::vector<uint8_t
             break;
         }
     }
-    for (size_t i = 0; i < blocks_allocated; ++i) {
-        free_blocks_bitmap.allocateBlock(inode.block_pointers[i]);
-        for (size_t j = 0; j < BLOCK_SIZE && (i * BLOCK_SIZE + j) < data.size(); ++j) {
-            data_blocks[inode.block_pointers[i]].data[j] = data[i * BLOCK_SIZE + j];
-        
+    // std::cout << "data: " ;
+    // for (const auto &byte : data) {
+    //     std::cout << static_cast<char>(byte) << "";
+    // }
+    // std::cout <<std::endl << "Data size: " << data.size() << std::endl;
+    for(int i = 0; i < blocks_allocated; i++) {
+        for(int j = 0; j < BLOCK_SIZE; j++) {
+            // std::cout << data[i * BLOCK_SIZE + j] << " ";
+            // std::cout << i * BLOCK_SIZE + j << " ";
+            if(i * BLOCK_SIZE + j >= data.size()) {
+                data_blocks[inode.block_pointers[i]].data[j] = ' ';
+                continue;
+            }
+            data_blocks[inode.block_pointers[i]].data[j] = (char) data[i * BLOCK_SIZE + j];
         }
+        free_blocks_bitmap.allocateBlock(inode.block_pointers[i]);
+        // data_blocks[inode.block_pointers[i]].data[] = data.data() + i * BLOCK_SIZE;
+        // std::copy(data.begin() + i * BLOCK_SIZE, data.begin() + (i + 1) * BLOCK_SIZE, data_blocks[inode.block_pointers[i]].data);
     }
+    // Write the data into the allocated blocks
+    // size_t data_offset = 0;
+    // for (size_t block_index = 0; block_index < blocks_allocated; ++block_index) {
+    //     size_t block_id = inode.block_pointers[block_index];
+    //     size_t bytes_to_write = BLOCK_SIZE; // std::min(BLOCK_SIZE, (int)(data.size() - data_offset));
+
+    //     // Copy the data to the block
+    //     std::copy(data.begin() + data_offset, 
+    //               data.begin() + data_offset + bytes_to_write, 
+    //               data_blocks[block_id].data);
+
+    //     data_offset += bytes_to_write;
+    // }
+
+
+    // Save the inode metadata to the inode table
+    // for (auto &existing_inode : inodes) {
+    //     if (!existing_inode.used) {
+    //         existing_inode = inode;
+    //         existing_inode.used = true;
+    //         break;
+    //     }
+    // }
+
     saveDisk(diskLocation);
 }
+
 
 
 void FileSystem::deleteFile(const std::string &filename) {
@@ -90,7 +127,12 @@ void FileSystem::importFile(const std::string &external_filename, const std::str
     auto size = file.tellg();
     file.seekg(0, std::ios::beg);
     std::vector<uint8_t> data(size);
+    std::cout << std::dec << std::endl;
     file.read(reinterpret_cast<char *>(data.data()), size);
+    // std::cout << "data: ";
+    // for (const auto &byte : data) {
+    //     std::cout << static_cast<char>(byte) << "";
+    // }
     file.close();
     saveFile(internal_filename, data);
 }
@@ -107,7 +149,7 @@ void FileSystem::exportFile(const std::string &internal_filename, const std::str
         std::cerr << "Could not open file!" << std::endl;
         return;
     }
-    for (size_t i = 0; i < inode->size / BLOCK_SIZE + 1; ++i) {
+    for (size_t i = 0; i < inode->size / BLOCK_SIZE; ++i) {
         file.write(data_blocks[inode->block_pointers[i]].data, BLOCK_SIZE);
     }
     file.close();
@@ -150,7 +192,7 @@ std::string FileSystem::readFile(const std::string &filename) {
         return "File not found!";
     }
     std::string data;
-    for (size_t i = 0; i < inode->size / BLOCK_SIZE + 1; ++i) {
+    for (size_t i = 0; i < inode->size / BLOCK_SIZE; ++i) {
         data.append(data_blocks[inode->block_pointers[i]].data, BLOCK_SIZE);
     }
     return data;
