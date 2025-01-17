@@ -4,75 +4,8 @@
 #include <sstream>
 #include <vector>
 #include <filesystem>
+#include "FileSystemShell.cpp"
 
-std::pair<std::string, std::vector<std::string>> parseCommand(const std::string& command) {
-    std::istringstream iss(command);
-    std::string cmd;
-    std::vector<std::string> args;
-    iss >> cmd;
-    std::string arg;
-    while (iss >> arg) {
-        args.push_back(arg);
-    }
-    return {cmd, args};
-}
-
-void printFSHelp() {
-    std::cout << "File System Commands:\n";
-    std::cout << "  exit - Exit the interactive shell\n";
-    std::cout << "  saveFile <filename> <content> - Save a file with the specified content\n";
-    std::cout << "  deleteFile <filename> - Delete the specified file\n";
-    std::cout << "  ls - List all files in the file system\n";
-    std::cout << "  mm - Show memory state of the file system\n";
-    std::cout << "  importFile <src> <dest> - Import a file from the host file system\n";
-    std::cout << "  exportFile <src> <dest> - Export a file to the host file system\n";
-    std::cout << "  help - Show this help message\n\n";
-}
-
-bool executeCommand(FileSystem* fs, const std::string& cmd, const std::vector<std::string>& args, const std::string& command) {
-    std::cout << "Disk Location: " << fs->diskLocation << std::endl;
-    if (cmd == "exit") {
-        return false;
-    } else if (cmd == "saveFile" && args.size() >= 2) {
-        std::string filename = args[0];
-        std::string content = command.substr(command.find(args[1]));
-        fs->saveFile(filename, std::vector<uint8_t>(content.begin(), content.end()));
-    } else if (cmd == "deleteFile" && args.size() == 1) {
-        std::string filename = args[0];
-        fs->deleteFile(filename);
-    } else if (cmd == "ls") {
-        fs->showFiles();
-    } else if (cmd == "mm") {
-        fs->showMemoryState();
-    } else if (cmd == "importFile" && args.size() == 2) {
-        std::string src = args[0];
-        std::string dest = args[1];
-        fs->importFile(src, dest);
-    } else if (cmd == "exportFile" && args.size() == 2) {
-        std::string src = args[0];
-        std::string dest = args[1];
-        fs->exportFile(src, dest);
-    } else if (cmd == "help") {
-        printFSHelp();
-    } else {
-        std::cout << "Unknown or invalid command: " << command << std::endl;
-        std::cout << "Type 'help' for a list of available commands." << std::endl;
-    }
-    return true;
-}
-
-
-void interactiveShell(FileSystem* fs) {
-    std::cout << "Interact:diskLocation: " << fs->diskLocation << std::endl;
-    std::string command;
-    bool run = true;
-    while (run) {
-        std::cout << "\nfs> ";
-        std::getline(std::cin, command);
-        auto [cmd, args] = parseCommand(command);
-        run = executeCommand(fs, cmd, args, command);
-    }
-}
 
 void removeDisk(const std::string &path) {
     std::string fullPath = "partitions/" + path;
@@ -103,6 +36,7 @@ void printHelp() {
     std::cout << "  createDisk <path> - Create a new disk at the specified path\n";
     std::cout << "  run <path> - Open the interactive shell for the specified disk\n";
     std::cout << "  showDisks - Show all available disks\n";
+    std::cout << "  test - Run a set of preapered commands\n";
     std::cout << "  help - Show this help message\n\n";
 }
 
@@ -119,15 +53,16 @@ void mainShell() {
         } else if (cmd == "createDisk" && args.size() == 1) {
             createNewDisk(args[0]);
         } else if (cmd == "run" && args.size() == 1) {
-            // FileSystem* fs = ;
-            
-            // fs.setDiskLocation("partitions/" + args[0]);
             interactiveShell(FileSystem::loadDisk("partitions/" + args[0]));
         } else if (cmd == "help") {
             printHelp();
         } else if(cmd == "showDisks") {
             showDisks();
-        } else {
+        }
+        else if(cmd == "runPreaperedCommand") {
+            runPreaperedCommand(FileSystem::loadDisk("partitions/temp.myfs"));
+        }
+        else {
             std::cout << "Unknown or invalid command: " << command << std::endl;
             std::cout << "Type 'help' for a list of available commands." << std::endl;
         }
