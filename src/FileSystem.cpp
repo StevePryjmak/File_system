@@ -32,16 +32,15 @@ void FileSystem::saveFile(const std::string& filename, const std::vector<uint8_t
     }
     auto inode = INode();
     strncpy(inode.name, filename.c_str(), filename.size());
-    size_t blocks_needed = inode.size / BLOCK_SIZE + 1;
+    size_t blocks_needed = data.size() / BLOCK_SIZE + 1;
     size_t blocks_allocated = 0;
-    inode.size = blocks_needed * BLOCK_SIZE;
     for (size_t i = 0; i < NUM_BLOCKS && blocks_allocated < blocks_needed; ++i) {
         if (free_blocks_bitmap.isBlockFree(i)) {
             inode.block_pointers[blocks_allocated] = i;
-            free_blocks_bitmap.allocateBlock(i);
             blocks_allocated++;
         }
     }
+    inode.size = blocks_needed * BLOCK_SIZE;
     if (blocks_allocated < blocks_needed) {
         std::cerr << "Not enough space to save file!" << std::endl;
         return;
@@ -54,8 +53,10 @@ void FileSystem::saveFile(const std::string& filename, const std::vector<uint8_t
         }
     }
     for (size_t i = 0; i < blocks_allocated; ++i) {
-        for (size_t j = 0; j < BLOCK_SIZE && (i * BLOCK_SIZE + j) < inode.size; ++j) {
+        free_blocks_bitmap.allocateBlock(inode.block_pointers[i]);
+        for (size_t j = 0; j < BLOCK_SIZE && (i * BLOCK_SIZE + j) < data.size(); ++j) {
             data_blocks[inode.block_pointers[i]].data[j] = data[i * BLOCK_SIZE + j];
+        
         }
     }
     saveDisk(diskLocation);
@@ -67,7 +68,9 @@ void FileSystem::deleteFile(const std::string &filename) {
         if (inode.used && filename == inode.name) {
             inode.used = false;
             for (size_t i = 0; i < inode.size / BLOCK_SIZE + 1; ++i) {
-                free_blocks_bitmap.deallocateBlock(inode.block_pointers[i]);
+                if (!free_blocks_bitmap.isBlockFree(inode.block_pointers[i])) {
+                    free_blocks_bitmap.deallocateBlock(inode.block_pointers[i]);
+                }
             }
         }
     }
@@ -167,7 +170,7 @@ FileSystem *FileSystem::loadDisk(const std::string &path) {
     file.read(reinterpret_cast<char *>(system->data_blocks), sizeof(system->data_blocks));
     system->diskLocation = path;
     file.close();
-    std::cout << "Disk location: " << system->diskLocation << std::endl;
+    // std::cout << "Disk location: " << system->diskLocation << std::endl;
     return system;
 }
 

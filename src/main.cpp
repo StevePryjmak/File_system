@@ -59,8 +59,9 @@ void mainShell() {
         } else if(cmd == "showDisks") {
             showDisks();
         }
-        else if(cmd == "runPreaperedCommand") {
-            runPreaperedCommand(FileSystem::loadDisk("partitions/temp.myfs"));
+        else if(cmd == "test") {
+            createNewDisk("test");
+            runPreparedCommand(FileSystem::loadDisk("partitions/test.myfs"));
         }
         else {
             std::cout << "Unknown or invalid command: " << command << std::endl;

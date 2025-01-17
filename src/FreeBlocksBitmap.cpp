@@ -1,7 +1,7 @@
 #include "FreeBlocksBitmap.h"
 
 FreeBlocksBitmap::FreeBlocksBitmap() {
-    bitmap.set();
+    bitmap.set(); 
 }
 
 
@@ -12,6 +12,9 @@ bool FreeBlocksBitmap::allocateBlock(size_t blockIndex) {
     }
     if (bitmap.test(blockIndex)) {
         bitmap.reset(blockIndex);
+        // std::cout << "Before reset" <<std::endl;
+        // bitmap.set(blockIndex, 0);
+        // std::cout << "After reset" << << std::endl;
         return true;
     } else {
         std::cerr << "Block is already allocated!" << std::endl;
